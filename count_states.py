@@ -3,8 +3,6 @@ import numpy as np
 import glob
 import sys
 import ahocorasick
-import os
-
 
 
 state_labs = np.array(["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA", 
@@ -39,47 +37,28 @@ search_terms = (state_names + state_abbv)
 
 auto = ahocorasick.Automaton()
 
+# Add state terms to Aho-Korasick mapping object
 for substr in search_terms:
     auto.add_word(substr, substr)
 auto.make_automaton()
 
-
 #--------------------------------------------------------------------
-# Subset times to when US users most active
-#--------------------------------------------------------------------
-
-def strip_time(x):
-    return x[11:13]
-
-def subset_time(df):
-    time_vec = df.created_at.values
-    df['hour'] = int(np.vectorize(strip_time)(time_vec))
-
-    return df[(df.hour > 15) & (df.hour < 22)]
-
-#--------------------------------------------------------------------
-# Search Functions
+# Ahocorasick Search Functions
 #--------------------------------------------------------------------
 
-def state_search(state, text):
-    ind = np.char.find(np.char.upper(text), np.char.upper(state))
-    ind[ind >= 0] = 1
-    ind[ind == -1] = 0
-    return np.sum(ind)
+def AC_search(strings):
+    # Initialize empty matches list
+    matches = [''] * len(strings)
 
-def states_search(text):
-    lst = np.array([state_labs[state_names == state][0] if state_search(state, text) > 0 else '' for state in state_names])
-    lst = np.append(lst, np.array([state_labs[state_abbv == state][0] if state_search(state, text) > 0 else '' for state in state_abbv]))
-    lst = lst[lst != '']
-
-    if len(lst) > 0:
-        return lst[0]
+    for i, astr in enumerate(strings):
+        matches[i] = ''
+        # If match found, access label via dictionary
+        for _, found in auto.iter(astr):
+            matches[i] = state_dict[found]
     
-    else:
-        return ''
+    return matches
 
 def tweet_search(tweets, df):
-    #matches = np.vectorize(states_search)(tweets)
     matches = AC_search(tweets)
 
     df['state'] = matches
@@ -88,26 +67,11 @@ def tweet_search(tweets, df):
     return df
 
 #--------------------------------------------------------------------
-# Ahocorasick Search
-#--------------------------------------------------------------------
-
-def AC_search(strings):
-    matches = [''] * len(strings)
-    for i, astr in enumerate(strings):
-        matches[i] = ''
-        for _, found in auto.iter(astr):
-            matches[i] = state_dict[found]
-    
-    return matches
-
-
-#--------------------------------------------------------------------
 # Abstracted Geolocate Tweets Function
 #--------------------------------------------------------------------
 
 def Geolocate_Tweets(df):
     tweet_loc = df['profile_location'].values
-    #tweet_loc = tweet_loc.astype('<U40')
 
     geolocated_tweets = tweet_search(list(tweet_loc), df)
 
@@ -129,6 +93,10 @@ def count_state_tweets(df, day):
     state_counts['Date'] = np.repeat(month + '-' + str(day), state_counts.shape[0])
 
     return state_counts
+
+#--------------------------------------------------------------------
+# Main
+#--------------------------------------------------------------------
 
 if __name__ == "__main__":
     if len(sys.argv) >= 2:
