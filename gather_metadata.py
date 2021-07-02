@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import glob
 import sys
+import ahocorasick
+import os
 
 
 
@@ -11,13 +13,13 @@ state_labs = np.array(["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL
           "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
           "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"])
 
-state_abbv = np.array([", AL", ", AK", ", AZ", ", AR", ", CA", ", CO", ", CT", ", DC", ", DE", ", FL", ", GA", 
+state_abbv = [", AL", ", AK", ", AZ", ", AR", ", CA", ", CO", ", CT", ", DC", ", DE", ", FL", ", GA", 
           ", HI", ", ID", ", IL", ", IN", ", IA", ", KS", ", KY", ", LA", ", ME", ", MD", 
           ", MA", ", MI", ", MN", ", MS", ", MO", ", MT", ", NE", ", NV", ", NH", ", NJ", 
           ", NM", ", NY", ", NC", ", ND", ", OH", ", OK", ", OR", ", PA", ", RI", ", SC", 
-          ", SD", ", TN", ", TX", ", UT", ", VT", ", VA", ", WA", ", WV", ", WI", ", WY"])
+          ", SD", ", TN", ", TX", ", UT", ", VT", ", VA", ", WA", ", WV", ", WI", ", WY"]
 
-state_names = np.array(["Alabama", "Alaska", "Arizona", "Arkansas",
+state_names = ["Alabama", "Alaska", "Arizona", "Arkansas",
     "California", "Colorado", "Connecticut", "District of Columbia", "Delaware", 
     "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
     "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
@@ -25,9 +27,22 @@ state_names = np.array(["Alabama", "Alaska", "Arizona", "Arkansas",
     "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota",  
     "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", 
     "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont",
-    "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"])
+    "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"]
 
-#search_terms = np.append(state_names, state_abbv)
+state_dict = {state_abbv[i]: state_labs[i] for i in range(len(state_labs))}
+state_dict.update({state_names[i]: state_labs[i] for i in range(len(state_names))})
+
+#--------------------------------------------------------------------
+# Ahocorasick Initialization
+#--------------------------------------------------------------------
+search_terms = (state_names + state_abbv)
+
+auto = ahocorasick.Automaton()
+
+for substr in search_terms:
+    auto.add_word(substr, substr)
+auto.make_automaton()
+
 
 #--------------------------------------------------------------------
 # Subset times to when US users most active
@@ -64,12 +79,27 @@ def states_search(text):
         return ''
 
 def tweet_search(tweets, df):
-    matches = np.vectorize(states_search)(tweets)
+    #matches = np.vectorize(states_search)(tweets)
+    matches = AC_search(tweets)
 
     df['state'] = matches
-    df = df.loc[matches != '']
+    df = df.loc[np.array(matches) != '']
     df = df.drop(['urls', 'profile_location', 'geotag_location', 'geotag_country'], axis=1)
     return df
+
+#--------------------------------------------------------------------
+# Ahocorasick Search
+#--------------------------------------------------------------------
+
+def AC_search(strings):
+    matches = [''] * len(strings)
+    for i, astr in enumerate(strings):
+        matches[i] = ''
+        for _, found in auto.iter(astr):
+            matches[i] = state_dict[found]
+    
+    return matches
+
 
 #--------------------------------------------------------------------
 # Abstracted Geolocate Tweets Function
@@ -77,9 +107,9 @@ def tweet_search(tweets, df):
 
 def Geolocate_Tweets(df):
     tweet_loc = df['profile_location'].values
-    tweet_loc = tweet_loc.astype('<U40')
+    #tweet_loc = tweet_loc.astype('<U40')
 
-    geolocated_tweets = tweet_search(tweet_loc, df)
+    geolocated_tweets = tweet_search(list(tweet_loc), df)
 
     print("In Rows: ", df.shape[0])
     print("Out Rows: ", geolocated_tweets.shape[0])
@@ -95,7 +125,8 @@ def count_state_tweets(df, day):
     counts = df.state.value_counts()
     state_counts = pd.DataFrame([])
     state_counts['State'] = counts.sort_index().index
-    state_counts['Counts' + str(day)] = counts.sort_index().values 
+    state_counts['Counts'] = counts.sort_index().values 
+    state_counts['Date'] = np.repeat(month + '-' + str(day), state_counts.shape[0])
 
     return state_counts
 
@@ -106,8 +137,8 @@ if __name__ == "__main__":
     
     else:
         print("Debug Mode Active")
-        year = 2020
-        month = 2
+        year = '2020'
+        month = '2'
 
     #--------------------------------------------------------------------
     # Now has to be broken up into separate files and slowly compiled
@@ -117,6 +148,7 @@ if __name__ == "__main__":
     all_files = glob.glob(data_dir + "*.csv")
 
     li = []
+    day = 0
 
     for filename in all_files:
         print('On file: ', filename)
@@ -125,5 +157,18 @@ if __name__ == "__main__":
 
         geo_tweets = Geolocate_Tweets(day_tweets)
 
-        li.append(count_state_tweets(geo_tweets, filename[-5]))
+        day += 1
+        li.append(count_state_tweets(geo_tweets, day))
 
+
+    state_counts = pd.concat(li, axis=0, ignore_index=True)
+
+    #--------------------------------------------------------------------
+    # Write Tweets 
+    #--------------------------------------------------------------------
+
+    write_dir = '/media/johnattan/LaCie/Twitter_Terms/State_Counts/' 
+
+    # Create directory if it does not already exist
+
+    state_counts.to_csv(write_dir + year + '-' + month + '.csv')
