@@ -15,8 +15,8 @@ import glob
 def word_search(word, text, df):
 
     ind = np.char.find(np.char.upper(text), word)
-    ind[ind >= 0] = 1
-    ind[ind == -1] = 0
+    ind[ind >= 0] = 0
+    ind[ind == -1] = 1
 
     return df.loc[ind.astype('bool')]
 
@@ -32,8 +32,10 @@ if __name__ == "__main__":
     # Now has to be broken up into separate files and slowly compiled
     #--------------------------------------------------------------------
 
-    data_dir = '/media/johnattan/LaCie/Twitter_Data_Adam/' + year + '/' + month + '/' 
-    all_files = glob.glob(data_dir + "*.csv")
+    #data_dir = '/media/johnattan/LaCie/Twitter_Data_Adam/' + year + '/' + month + '/' 
+    filename = '/media/johnattan/LaCie/Twitter_Terms/' + keyterm + '/' + year + '-' + month + '.csv'
+
+    # all_files = glob.glob(data_dir + "*.csv")
 
     # Keep track of how many tweets there are total and the number containing the key term
     tweet_count = 0
@@ -44,24 +46,22 @@ if __name__ == "__main__":
        'geotag_location', 'geotag_country'])
 
 
-    for filename in all_files:
-        print('On file: ', filename)
-        day_tweets = pd.read_csv(filename, index_col=None, header=0)
-        day_tweets = day_tweets.dropna(subset = ['profile_location', 'text'])
+    day_tweets = pd.read_csv(filename, index_col=None, header=0)
+    day_tweets = day_tweets.dropna(subset = ['profile_location', 'text'])
 
-        tweet_count += day_tweets.shape[0]
+    tweet_count += day_tweets.shape[0]
 
-        #--------------------------------------------------------------------
-        # Parse Tweets for Key Term
-        #--------------------------------------------------------------------
+    #--------------------------------------------------------------------
+    # Parse Tweets for Key Term
+    #--------------------------------------------------------------------
 
-        # Vectorize tweet column and set it to numpy string to optimize speed
-        tweet_text = day_tweets['text'].values
-        tweet_text = tweet_text.astype('<U140')
+    # Vectorize tweet column and set it to numpy string to optimize speed
+    tweet_text = day_tweets['text'].values
+    tweet_text = tweet_text.astype('<U140')
 
-        day_tweets_kw = word_search(keyterm, tweet_text, day_tweets)
-        tweet_count_kw += day_tweets_kw.shape[0]
-        li.append(day_tweets_kw)
+    day_tweets_kw = word_search(keyterm, tweet_text, day_tweets)
+    tweet_count_kw += day_tweets_kw.shape[0]
+    li.append(day_tweets_kw)
 
     month_tweets_kw = pd.concat(li, axis=0, ignore_index=True)
 
@@ -71,8 +71,7 @@ if __name__ == "__main__":
     # Write Tweets 
     #--------------------------------------------------------------------
 
-    # Strip to remove whitespace
-    write_dir = '/media/johnattan/LaCie/Twitter_Terms/' + keyterm.strip() + '/' 
+    write_dir = '/media/johnattan/LaCie/Twitter_Terms/' + keyterm + '/' 
 
     # Create directory if it does not already exist
     if not os.path.exists(write_dir):

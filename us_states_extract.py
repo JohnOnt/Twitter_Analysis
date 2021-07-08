@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
 
     data_dir = '/media/johnattan/LaCie/Twitter_Terms/' + keyterm + '/' 
-    all_files = glob.glob(data_dir + "*.csv")
+    all_files = glob.glob(data_dir + "2*.csv")
 
     # Keep track of how many tweets there are total and the number containing the key term
     tweet_count = 0
