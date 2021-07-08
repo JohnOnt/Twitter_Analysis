@@ -26,6 +26,7 @@ if __name__ == "__main__":
     year    = str(sys.argv[1])
     month   = str(sys.argv[2])
     keyterm = str(sys.argv[3])
+    keyterm_rem = str(sys.argv[4])
     
 
     #--------------------------------------------------------------------
@@ -59,7 +60,7 @@ if __name__ == "__main__":
     tweet_text = day_tweets['text'].values
     tweet_text = tweet_text.astype('<U140')
 
-    day_tweets_kw = word_search(keyterm, tweet_text, day_tweets)
+    day_tweets_kw = word_search(keyterm_rem, tweet_text, day_tweets)
     tweet_count_kw += day_tweets_kw.shape[0]
     li.append(day_tweets_kw)
 
@@ -72,9 +73,5 @@ if __name__ == "__main__":
     #--------------------------------------------------------------------
 
     write_dir = '/media/johnattan/LaCie/Twitter_Terms/' + keyterm + '/' 
-
-    # Create directory if it does not already exist
-    if not os.path.exists(write_dir):
-        os.mkdir(write_dir)
 
     month_tweets_kw.to_csv(write_dir + year + '-' + month + '.csv')

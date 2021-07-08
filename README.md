@@ -4,7 +4,7 @@
 
 Extracts all tweets containing passed keyword for specified month of tweet data.
 
-# keyword_remove.py (year, month, keyword)
+## keyword_remove.py (year, month, keyword)
 
 Removes all isntances of keyword from data collected in *keyword_extract* script.
 This is useful for cases such as ALCOHOL minus SANITIZER related tweets.
