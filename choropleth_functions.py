@@ -115,11 +115,13 @@ def plotty(kw, date, renderer = 'png'):
     fig.show(renderer = renderer)
     fig.write_image('figures/' + kw + '/' + kw + '-' + date + '.png')
 
-def plotty_plots(kw, dates, renderer = 'png', rows = 2, cols = 3):
+def plotty_plots(kw, dates, renderer = 'png', rows = 2, cols = 3, savefig = False):
     state_count = build_dataframe(kw, dates)
 
     Months = pd.DataFrame({'2020-01': '2020-01', '2020-02': '2020-02', '2020-03': '2020-03', 
                            '2020-04': '2020-04', '2020-05': '2020-05', '2020-06': '2020-06'}, index=[0])
+    
+    Months = Months[dates]
      
     fig = make_subplots(
         rows=rows, cols=cols,
@@ -144,11 +146,12 @@ def plotty_plots(kw, dates, renderer = 'png', rows = 2, cols = 3):
         )
 
     fig.show(renderer = renderer)
-    fig.write_image('figures/' + kw + '/' + dates[0] + '--' + dates[-1] + '.png')
+    if savefig:
+        fig.write_image('figures/' + kw + '/' + dates[0] + '--' + dates[-1] + '.png')
 
 
     
-def plotty_plots_w(kw, dates, renderer = 'png', rows = 1, cols = 3):
+def plotty_plots_w(kw, dates, renderer = 'png', rows = 1, cols = 3, savefig = False):
     state_count = build_dataframe(kw, dates)
     # Standardize, currently off
     #state_count['Count'] = (state_count.Count-state_count.Count.min())/(state_count.Count.max()-state_count.Count.min())
@@ -193,7 +196,8 @@ def plotty_plots_w(kw, dates, renderer = 'png', rows = 1, cols = 3):
         )
 
     fig.show(renderer = renderer)
-    fig.write_image('figures/' + kw + '/' + dates[0] + '--' + dates[-1] + '_waves.png')
+    if savefig:
+        fig.write_image('figures/' + kw + '/' + dates[0] + '--' + dates[-1] + '_waves.png')
 
 
 
