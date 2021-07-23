@@ -3,10 +3,7 @@ import pandas as pd
 import os
 import glob
 import sys
-import spacy
-from spacy.matcher import Matcher
-nlp = spacy.load("en_core_web_sm")
-
+import ahocorasick
 
 """
     NOTES
@@ -18,13 +15,19 @@ nlp = spacy.load("en_core_web_sm")
 # Rule-Based Matching Lists for SpaCy
 #--------------------------------------------------------------------
 
-state_abbv = np.array(["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA", 
+state_labs = np.array(["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA", 
           "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", 
           "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", 
           "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
           "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"])
 
-state_names = np.array(["Alabama", "Alaska", "Arizona", "Arkansas",
+state_abbv = [", AL", ", AK", ", AZ", ", AR", ", CA", ", CO", ", CT", ", DC", ", DE", ", FL", ", GA", 
+          ", HI", ", ID", ", IL", ", IN", ", IA", ", KS", ", KY", ", LA", ", ME", ", MD", 
+          ", MA", ", MI", ", MN", ", MS", ", MO", ", MT", ", NE", ", NV", ", NH", ", NJ", 
+          ", NM", ", NY", ", NC", ", ND", ", OH", ", OK", ", OR", ", PA", ", RI", ", SC", 
+          ", SD", ", TN", ", TX", ", UT", ", VT", ", VA", ", WA", ", WV", ", WI", ", WY"]
+
+state_names = ["Alabama", "Alaska", "Arizona", "Arkansas",
     "California", "Colorado", "Connecticut", "District of Columbia", "Delaware", 
     "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
     "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
@@ -32,69 +35,60 @@ state_names = np.array(["Alabama", "Alaska", "Arizona", "Arkansas",
     "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota",  
     "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", 
     "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont",
-    "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"])
+    "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"]
 
-matcher = Matcher(nlp.vocab)
-
-pattern = [{'IS_ALPHA': True}, 
-           {'IS_PUNCT': True}, 
-           {'IS_ALPHA': True}]
-
-matcher.add("State Abbv", [pattern])
+state_dict = {state_abbv[i]: state_labs[i] for i in range(len(state_labs))}
+state_dict.update({state_names[i]: state_labs[i] for i in range(len(state_names))})
 
 #--------------------------------------------------------------------
-# Search Functions
+# Ahocorasick Initialization
+#--------------------------------------------------------------------
+search_terms = (state_names + state_abbv)
+
+auto = ahocorasick.Automaton()
+
+# Add state terms to Aho-Korasick mapping object
+for substr in search_terms:
+    auto.add_word(substr, substr)
+auto.make_automaton()
+
+#--------------------------------------------------------------------
+# Ahocorasick Search Functions
 #--------------------------------------------------------------------
 
-def state_search(state, text):
-    ind = np.char.find(np.char.upper(text), np.char.upper(state))
-    ind[ind >= 0] = 1
-    ind[ind == -1] = 0
-    return np.sum(ind)
+def AC_search(strings):
+    # Initialize empty matches list
+    matches = [''] * len(strings)
 
-def states_search(text):
-    lst = np.array([state_abbv[state_names == state][0] if state_search(state, text) > 0 else '' for state in state_names])
-    lst = lst[lst != '']
-    if len(lst) > 0:
-        return lst[0]
+    for i, astr in enumerate(strings):
+        matches[i] = ''
+        # If match found, access label via dictionary
+        for _, found in auto.iter(astr):
+            matches[i] = state_dict[found]
     
-    else:
-        doc = nlp(str(text))
-        matches = matcher(doc)
-
-        if len(matches) > 0:
-            match = doc[matches[0][2] - 1]
-
-            if str(match) in state_abbv:
-                return str(match)
-
-        # Insert Spacy matcher code here
-        return ''
-
+    return matches
 
 def tweet_search(tweets, df):
-    matches = np.vectorize(states_search)(tweets)
+    matches = AC_search(tweets)
 
     df['state'] = matches
-    df = df.loc[matches != '']
+    df = df.loc[np.array(matches) != '']
     df = df.drop(['urls', 'profile_location', 'geotag_location', 'geotag_country'], axis=1)
     return df
 
 #--------------------------------------------------------------------
-# Export Function to return Geolocated Tweet DF
+# Abstracted Geolocate Tweets Function
 #--------------------------------------------------------------------
 
 def Geolocate_Tweets(df):
     tweet_loc = df['profile_location'].values
-    tweet_loc = tweet_loc.astype('<U40')
 
-    geolocated_tweets = tweet_search(tweet_loc, df)
+    geolocated_tweets = tweet_search(list(tweet_loc), df)
 
     print("In Rows: ", df.shape[0])
     print("Out Rows: ", geolocated_tweets.shape[0])
 
     return geolocated_tweets
-
 
 if __name__ == "__main__":
     keyterm = str(sys.argv[1])

@@ -45,6 +45,7 @@ def summarize_models(kw, dates, features):
     res = mod.fit()
     print(res.summary())
 
+
 def summarize_LASSO(kw, dates, features):
     df = get_data(kw, dates)
     X = df[features] 
@@ -65,37 +66,35 @@ def summarize_LASSO(kw, dates, features):
         print(pair)
 
 
-def run_models(kw, dates, plot = False):
-    df = get_data(kw)
-    li = []
+def plot_models(kw, X, y, model):
 
-    if plot:
-        fig, axs = plt.subplots(len(dates)//2, 2, figsize = (20, 5))
-        fig.suptitle(kw + ' Tweet Volume vs State Alcohol Policy Score')
-        fig.subplots_adjust(hspace = .7)
-        axs = axs.ravel()
+    #fig, axs = plt.subplots(nrow, ncol, figsize = (20, 5))
+    #fig.suptitle(kw + ' Tweet Volume vs State Alcohol Policy Score')
+    #fig.subplots_adjust(hspace = .7)
+    #axs = axs.ravel()
 
-    for i, date in enumerate(dates):
-        if wave:
-            df_sub = subset_date_w(df, date)
-        else:
-            df_sub = subset_date(df, date)
+    # for i, date in enumerate(dates):
+        # if wave:
+            # df_sub = subset_date_w(df, date)
+        # else:
+            # df_sub = subset_date(df, date)
 
-        X = (df_sub.Score.values).reshape(-1,1)
-        y =  df_sub.Count.values
+        # X = (df_sub.Score.values).reshape(-1,1)
+        # y =  df_sub.Count.values
 
-        reg = LinearRegression().fit(X, y)
-        li.append(pd.DataFrame({'Date': [date], 'Coef': reg.coef_, 'Score': [reg.score(X, y)]}))
+        # reg = LinearRegression().fit(X, y)
+        # li.append(pd.DataFrame({'Date': [date], 'Coef': reg.coef_, 'Score': [reg.score(X, y)]}))
 
-        if plot:
-            axs[i].scatter(X, y, c='black') 
-            axs[i].plot(X, reg.predict(X))
-            axs[i].set_title(date)
-            axs[i].set(xlabel='Policy Score', ylabel='Tweet Volume')
+    # axs[i].scatter(X, y, c='black') 
+    # axs[i].plot(X, reg.predict(X))
+    # axs[i].set_title(date)
+    # axs[i].set(xlabel='Policy Score', ylabel='Tweet Volume')
+
+    plt.scatter(X, y, c='black')
+    plt.plot(X, model.predict(X))
  
     if False:
         if wave:
             fig.savefig('figures/Regression/' + kw + '_waves.png')
         else:
             fig.savefig('figures/Regression/' + kw + '.png')
-    return pd.concat(li, axis=0, ignore_index=True)
