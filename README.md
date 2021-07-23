@@ -1,6 +1,10 @@
+# Twitter AUD Analysis
+Analysis code for examinning the prevalance of AUD-related terms on Twitter throughout the pandemic.
+Although the data used was non-identifying to begin with, any non-summary data is left out as an added measure of privacy.
+
 # File descriptions
 
-## keyword_extracy.py (year, month, keyword)
+## keyword_extract.py (year, month, keyword)
 
 Extracts all tweets containing passed keyword for specified month of tweet data.
 
@@ -8,6 +12,11 @@ Extracts all tweets containing passed keyword for specified month of tweet data.
 
 Removes all isntances of keyword from data collected in *keyword_extract* script.
 This is useful for cases such as ALCOHOL minus SANITIZER related tweets.
+
+## us_states_extract.py (keyword)
+
+Further subsets the data from keyword_extract to identify the state in which each tweet was posted. 
+Pattern matches the profile_location column with state name strings.
 
 ## count_states.py (year, month)
 
