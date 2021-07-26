@@ -114,6 +114,7 @@ def plotty(kw, date, renderer = 'png'):
         )
     fig.show(renderer = renderer)
     fig.write_image('figures/' + kw + '/' + kw + '-' + date + '.png')
+    fig.write_html('figures/' + kw + '/' + kw + '-' + date + '.html')
 
 def plotty_plots(kw, dates, renderer = 'png', rows = 2, cols = 3, savefig = False):
     state_count = build_dataframe(kw, dates)
@@ -149,7 +150,8 @@ def plotty_plots(kw, dates, renderer = 'png', rows = 2, cols = 3, savefig = Fals
 
     fig.show(renderer = renderer)
     if savefig:
-        fig.write_image('figures/' + kw + '/' + dates[0] + '--' + dates[-1] + '.png')
+        fig.write_image('figures/' + kw + '/' + kw + '-' + dates[0] + '--' + dates[-1] + '.png')
+        fig.write_html('figures/' + kw + '/' + kw + '-' + dates[0] + '--' + dates[-1] + '.html')
 
 
     
