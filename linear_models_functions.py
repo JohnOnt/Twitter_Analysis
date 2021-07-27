@@ -6,19 +6,22 @@ from sklearn.linear_model import LassoCV
 import matplotlib.pyplot as plt
 import glob
 import statsmodels.api as sm
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 policy_scores = pd.read_csv('State_Policy_Scores.csv')
 
-def get_data(kw, dates):
+def get_data(kw, features, dates):
     filename = glob.glob('Train_Data/' + kw + "*.csv")[0]
     df = pd.read_csv(filename, index_col=0)
     df['Score'] = [(policy_scores.iloc[np.where(x == policy_scores.STATE)[0][0]].Score) for x in df.State]
+
     df = subset_date(df, dates)
     df = df.groupby('State').mean()
 
     # Add State Demographics
-    state_dem = pd.read_csv('/home/johnattan/Documents/CHIP/GST_Alc/Features_Data-Feature_Data.csv')
-    features = ['White Percent', 'Black Percent', 'Hispanic Percent', 'High School Diploma or Higher', "Bachelor's Degree or higher", 'With an Advanced Degree', 'Percent Pop of US', 'Density', 'Average Income', 'Peak Unemployment', 'COVID Cases', 'COVID Deaths', 'Population', 'COVID Cases (% of Population)']
+    state_dem = pd.read_csv('/home/johnattan/Documents/CHIP/GST_Alc/Features_Data - Feature_Data.csv')
+    #features = ['White Percent', 'Black Percent', 'Hispanic Percent', 'High School Diploma or Higher', "Bachelor's Degree or higher", 'With an Advanced Degree', 'Percent Pop of US', 'Density', 'Average Income', 'Peak Unemployment', 'COVID Cases', 'COVID Deaths', 'Population', 'COVID Cases (% of Population)']
 
     state_dem.index = df.index.values
 
@@ -33,17 +36,23 @@ def subset_date(df, dates):
     
     return df[list(map(bool,inds))]
 
-def summarize_models(kw, dates, features):
-    df = get_data(kw, dates)
+def summarize_models(kw, dates, features, verbose=False):
+    df = get_data(kw, features, dates)
 
-    X = df[features] 
+    X = df[features + ['Score']] 
     X = sm.add_constant(X)
 
     y =  df.Count.values
 
     mod = sm.OLS(y, X)
     res = mod.fit()
-    print(res.summary())
+    if verbose:
+        print(res.summary())
+    else:
+        print("R2: ", np.round(res.rsquared, 3))
+        print(list(zip(res.pvalues[res.pvalues < 0.1].index, 
+        np.round(res.pvalues[res.pvalues < 0.1].values, 5) )))
+
 
 
 def summarize_LASSO(kw, dates, features):
@@ -98,3 +107,11 @@ def plot_models(kw, X, y, model):
             fig.savefig('figures/Regression/' + kw + '_waves.png')
         else:
             fig.savefig('figures/Regression/' + kw + '.png')
+
+
+
+#features_a = ['Density', 'White Percent', 'Hispanic Percent', "Bachelor's Degree or higher", 'Median household income', 'COVID Cases (% of Population)', 'Peak Unemployment']
+
+#dates2 = ['2020-03', '2020-04', '2020-05', '2020-06']#, '2020-07', '2020-08', '2020-09', '2020-10', '2020-11', '2020-12']
+
+#summarize_models('ALCOHOL', dates2, features_a)
