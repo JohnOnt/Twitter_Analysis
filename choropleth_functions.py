@@ -57,7 +57,7 @@ def count_by_state(df):
     return counts
 
 
-def build_dataframe(kw, dates, waves = False):
+def build_dataframe(kw, dates, waves = False, write_data = False):
     
     df_kw = fetch_data_kw(kw)
     
@@ -80,7 +80,7 @@ def build_dataframe(kw, dates, waves = False):
 
     df = pd.concat(dfs, axis=0, ignore_index=True)
 
-    if len(dates) >= 5:
+    if write_data:
         df.to_csv('Train_Data/' + kw + '-' + dates[0] + '--' + dates[-1] + '.csv')
 
     return df

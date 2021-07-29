@@ -27,6 +27,9 @@ if __name__ == "__main__":
     month   = str(sys.argv[2])
     keyterm = str(sys.argv[3])
     
+    #print(keyterm)
+    #text = ['DeWine says he has no answers on whether COVID-19 spread has been related to protest, but he encourages that the question be asked again soon and thinks he may have more data eventually.']
+    #print(np.char.find(np.char.upper(text), keyterm))
 
     #--------------------------------------------------------------------
     # Now has to be broken up into separate files and slowly compiled
