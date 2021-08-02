@@ -110,8 +110,8 @@ def plot_models(kw, X, y, model):
 
 
 
-#features_a = ['Density', 'White Percent', 'Hispanic Percent', "Bachelor's Degree or higher", 'Median household income', 'COVID Cases (% of Population)', 'Peak Unemployment']
+features_a = ['Density', 'White Percent', 'Hispanic Percent', "Bachelor's Degree or higher", 'Median household income', 'COVID Cases (% of Population)', 'Peak Unemployment']
 
-#dates2 = ['2020-03', '2020-04', '2020-05', '2020-06']#, '2020-07', '2020-08', '2020-09', '2020-10', '2020-11', '2020-12']
+dates2 = ['2020-03', '2020-04', '2020-05', '2020-06']#, '2020-07', '2020-08', '2020-09', '2020-10', '2020-11', '2020-12']
 
-#summarize_models('ALCOHOL', dates2, features_a)
+summarize_models('ALCOHOL', dates2, features_a)

@@ -1,0 +1,30 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(mgcv)
+```
+
+```{r}
+alc_df = read.csv('Train_Data/ALCOHOL-2020-01--2020-12.csv')
+alc_df <- alc_df[-c(1)]
+```
+
+```{r}
+alc_df
+```
+
+```{r}
+gam1 = gam(Count ~ s(White.Percent) + s(Black.Percent) + s(Hispanic.Percent) +
+             (Bachelor.s.Degree.or.higher) + s(Median.household.income) + 
+             (Peak.Unemployment), data = alc_df)
+
+# "COVID.Cases....of.Population."
+```
+
+```{r}
+summary(gam1)
+plot(gam1)
+```
